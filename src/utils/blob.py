@@ -82,7 +82,12 @@ def load_csv_from_blob(
     return pd.read_csv(io.BytesIO(blob_data), **kwargs)
 
 
-def upload_gdf_to_blob(gdf, blob_name, stage: Literal["prod", "dev"] = "dev"):
+def upload_gdf_to_blob(
+    gdf,
+    blob_name,
+    stage: Literal["prod", "dev"] = "dev",
+    container_name: str = "projects",
+):
     with tempfile.TemporaryDirectory() as temp_dir:
         # File paths for shapefile components within the temp directory
         shp_base_path = os.path.join(temp_dir, "data")
@@ -100,13 +105,20 @@ def upload_gdf_to_blob(gdf, blob_name, stage: Literal["prod", "dev"] = "dev"):
 
         # Upload the buffer content as a blob
         with open(full_zip_path, "rb") as data:
-            upload_blob_data(blob_name, data, stage=stage)
+            upload_blob_data(
+                blob_name, data, stage=stage, container_name=container_name
+            )
 
 
 def load_gdf_from_blob(
-    blob_name, shapefile: str = None, stage: Literal["prod", "dev"] = "dev"
+    blob_name,
+    shapefile: str = None,
+    stage: Literal["prod", "dev"] = "dev",
+    container_name: str = "projects",
 ):
-    blob_data = load_blob_data(blob_name, stage=stage)
+    blob_data = load_blob_data(
+        blob_name, stage=stage, container_name=container_name
+    )
     with zipfile.ZipFile(io.BytesIO(blob_data), "r") as zip_ref:
         zip_ref.extractall("temp")
         if shapefile is None:
