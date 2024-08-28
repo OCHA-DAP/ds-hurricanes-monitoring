@@ -10,7 +10,10 @@ from src.utils import blob
 def get_blob_name(
     fcast_obsv: Literal["fcast", "obsv"], geography: Literal["cub", "all"]
 ):
-    return f"{blob.PROJECT_PREFIX}/monitoring/{geography}_{fcast_obsv}_monitoring.parquet"
+    return (
+        f"{blob.PROJECT_PREFIX}/monitoring/"
+        f"{geography}_{fcast_obsv}_monitoring.parquet"
+    )
 
 
 def load_existing_monitoring_points(

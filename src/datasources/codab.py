@@ -1,7 +1,7 @@
 import requests
 
-from src.utils import blob
 from src.constants import HAVANA1
+from src.utils import blob
 
 FIELDMAPS_BASE_URL = "https://data.fieldmaps.io/cod/originals/{iso3}.shp.zip"
 

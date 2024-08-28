@@ -1,3 +1,4 @@
+import io
 import smtplib
 import ssl
 from email.headerregistry import Address
@@ -9,21 +10,23 @@ import pytz
 from html2text import html2text
 from jinja2 import Environment, FileSystemLoader
 
+from src.email.plotting import get_plot_blob_name
 from src.email.utils import (
-    TEST_FCAST_MONITOR_ID,
-    TEST_OBSV_MONITOR_ID,
-    add_test_row_to_monitoring,
-    get_distribution_list,
-    TEST_STORM,
-    TEMPLATES_DIR,
     EMAIL_ADDRESS,
     EMAIL_HOST,
+    EMAIL_PASSWORD,
     EMAIL_PORT,
     EMAIL_USERNAME,
-    EMAIL_PASSWORD,
     STATIC_DIR,
+    TEMPLATES_DIR,
+    TEST_FCAST_MONITOR_ID,
+    TEST_OBSV_MONITOR_ID,
+    TEST_STORM,
+    add_test_row_to_monitoring,
+    get_distribution_list,
 )
 from src.monitoring import monitoring_utils
+from src.utils import blob
 
 
 def send_info_email(
@@ -92,8 +95,8 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         )
         for _, row in cc_list.iterrows()
     ]
-    # map_cid = make_msgid(domain="humdata.org")
-    # scatter_cid = make_msgid(domain="humdata.org")
+    map_cid = make_msgid(domain="humdata.org")
+    scatter_cid = make_msgid(domain="humdata.org")
     chd_banner_cid = make_msgid(domain="humdata.org")
     ocha_logo_cid = make_msgid(domain="humdata.org")
 
@@ -105,8 +108,8 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         test_email=TEST_STORM,
         min_dist=int(min_dist),
         closest_s=int(closest_s),
-        # map_cid=map_cid[1:-1],
-        # scatter_cid=scatter_cid[1:-1],
+        map_cid=map_cid[1:-1],
+        scatter_cid=scatter_cid[1:-1],
         chd_banner_cid=chd_banner_cid[1:-1],
         ocha_logo_cid=ocha_logo_cid[1:-1],
     )
@@ -114,15 +117,15 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     msg.set_content(text_str)
     msg.add_alternative(html_str, subtype="html")
 
-    # for plot_type, cid in zip(["map", "scatter"], [map_cid, scatter_cid]):
-    #     blob_name = get_plot_blob_name(monitor_id, plot_type)
-    #     image_data = io.BytesIO()
-    #     blob_client = blob.get_container_client().get_blob_client(blob_name)
-    #     blob_client.download_blob().download_to_stream(image_data)
-    #     image_data.seek(0)
-    #     msg.get_payload()[1].add_related(
-    #         image_data.read(), "image", "png", cid=cid
-    #     )
+    for plot_type, cid in zip(["map", "scatter"], [map_cid, scatter_cid]):
+        blob_name = get_plot_blob_name(monitor_id, plot_type, "cub")
+        image_data = io.BytesIO()
+        blob_client = blob.get_container_client().get_blob_client(blob_name)
+        blob_client.download_blob().download_to_stream(image_data)
+        image_data.seek(0)
+        msg.get_payload()[1].add_related(
+            image_data.read(), "image", "png", cid=cid
+        )
 
     for filename, cid in zip(
         ["centre_banner.png", "ocha_logo_wide.png"],

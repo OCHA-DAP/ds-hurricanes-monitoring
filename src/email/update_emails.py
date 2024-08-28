@@ -1,5 +1,6 @@
-import pandas as pd
 from typing import Literal
+
+import pandas as pd
 
 from src.constants import MIN_EMAIL_DISTANCE
 from src.email.send_emails import send_info_email

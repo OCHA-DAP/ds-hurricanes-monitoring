@@ -13,7 +13,7 @@ jupyter:
     name: ds-hurricanes-monitoring
 ---
 
-# Monitoring testing
+# Plotting testing
 
 ```python
 %load_ext jupyter_black
@@ -22,20 +22,9 @@ jupyter:
 ```
 
 ```python
-import pandas as pd
-
-from src.utils import blob
-from src.monitoring import monitoring_utils
+from src.email import plotting
 ```
 
 ```python
-monitoring_utils.update_fcast_monitoring("cub", verbose=True, clobber=True)
-```
-
-```python
-test = monitoring_utils.load_existing_monitoring_points("fcast", "cub")
-```
-
-```python
-test[test["min_dist"] <= 200]
+plotting.update_plots("fcast", "cub", verbose=True)
 ```
