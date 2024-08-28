@@ -16,5 +16,22 @@ jupyter:
 # Monitoring testing
 
 ```python
+%load_ext jupyter_black
+%load_ext autoreload
+%autoreload 2
+```
+
+```python
+import pandas as pd
+
+from src.utils import blob
+from src.monitoring import monitoring_utils
+```
+
+```python
+monitoring_utils.update_fcast_monitoring("cub", verbose=True, clobber=True)
+```
+
+```python
 
 ```

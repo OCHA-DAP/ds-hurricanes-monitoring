@@ -13,7 +13,18 @@ def get_blob_name(
     return f"{blob.PROJECT_PREFIX}/monitoring/{geography}_{fcast_obsv}_monitoring.parquet"
 
 
-def update_fcast_monitoring(geography: Literal["cub", "all"], clobber: bool = False, verbose: bool = False):
+def load_existing_monitoring_points(
+    fcast_obsv: Literal["fcast", "obsv"], geography: Literal["cub", "all"]
+):
+    blob_name = get_blob_name(fcast_obsv, geography)
+    return blob.load_parquet_from_blob(blob_name)
+
+
+def update_fcast_monitoring(
+    geography: Literal["cub", "all"],
+    clobber: bool = False,
+    verbose: bool = False,
+):
     if geography != "cub":
         raise NotImplementedError("Only Cuba is supported for now")
     else:

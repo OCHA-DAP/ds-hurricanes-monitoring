@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="font-size:10px;padding: 6px 10px 6px 10px;background-color:#CCCCCC;color:#FFFFFF">
+  <p style="margin:0;">
+    This email is purely advisory and does not constitute an official notice for anticipatory action. It also does not constitute an official forecast. Under the World Meteorological Organization's Tropical Cyclone Programme, RSMC Miami, operated by the NOAA National Hurricane Center, is responsible for monitoring hurricanes in the region; <a href="https://www.nhc.noaa.gov/cyclones/">the forecasts published on their website</a> should be treated as authoritative.
+  </p>
+</div>
+<div>
+  <p>Dear colleagues,</p>
+  <p>
+    The {{ fcast_obsv }} for {{ name }} produced at {{ pub_time }} on {{ pub_date }} (New York time) has been published by the NOAA National Hurricane Center, operators of Regional Specialized Meteorological Centre (RSMC) Miami.
+  </p>
+  <p>
+    Forecasted closest pass to Havana: <b>{{ min_dist }} km</b><br>
+    Maximum windspeed while at closest pass: <b>{{ closest_s }} knots</b>
+  </p>
+  <p>
+    The code used to produce this alert is available on GitHub <a href="https://github.com/OCHA-DAP/ds-hurricane-monitoring">here</a>.
+  </p>
+  <p>Best wishes,</p>
+  <p>OCHA Center for Humanitarian Data</p>
+</div>
+{% endblock content %}

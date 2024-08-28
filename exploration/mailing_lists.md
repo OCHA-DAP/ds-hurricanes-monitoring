@@ -13,7 +13,7 @@ jupyter:
     name: ds-hurricanes-monitoring
 ---
 
-# Email testing
+# Mailing lists
 
 ```python
 %load_ext jupyter_black
@@ -25,10 +25,23 @@ jupyter:
 import pandas as pd
 
 from src.utils import blob
-from src.monitoring import monitoring_utils
-from src.email import update_emails
+```
+
+## Test list
+
+```python
+df = pd.DataFrame(
+    columns=["name", "email", "cub", "all"],
+    data=[
+        ["TEST_NAME", "tristan.downing@un.org", "to", "to"],
+        ["TEST_NAME", "downing.tristan@gmail.com", "", ""],
+    ],
+)
+blob_name = f"{blob.PROJECT_PREFIX}/email/test_distribution_list.csv"
+blob.upload_csv_to_blob(blob_name, df)
+df
 ```
 
 ```python
-update_emails.update_fcast_info_emails(geography="cub", verbose=True)
+
 ```
