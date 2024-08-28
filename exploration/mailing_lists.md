@@ -42,6 +42,20 @@ blob.upload_csv_to_blob(blob_name, df)
 df
 ```
 
-```python
+## Actual list
 
+```python
+df = pd.DataFrame(
+    columns=["name", "email", "cub", "all"],
+    data=[
+        ["TEST_NAME", "downing.tristan@gmail.com", "to", "to"],
+    ],
+)
+df
+```
+
+```python
+blob_name = f"{blob.PROJECT_PREFIX}/email/distribution_list.csv"
+blob.upload_csv_to_blob(blob_name, df)
+df
 ```
