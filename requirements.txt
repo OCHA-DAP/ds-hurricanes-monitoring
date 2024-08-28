@@ -14,5 +14,5 @@ requests==2.32.3
 rioxarray==0.15.3
 scipy==1.13.1
 shapely==2.0.4
-tqdm==4.66.2
+tqdm==4.66.3
 xarray==2024.3.0
