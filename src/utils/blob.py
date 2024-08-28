@@ -37,7 +37,7 @@ def upload_parquet_to_blob(
 ):
     upload_blob_data(
         blob_name,
-        df.to_parquet(**kwargs),
+        df.to_parquet(**kwargs, index=False),
         stage=stage,
         container_name=container_name,
     )

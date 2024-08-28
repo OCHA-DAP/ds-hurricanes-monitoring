@@ -25,7 +25,9 @@ def download_codab_to_blob(iso3: str, clobber: bool = False):
     blob.upload_blob_data(blob_name, response.content, stage="dev")
 
 
-def load_codab_from_blob(iso3: str, admin_level: int = 0, aoi_only: bool = False):
+def load_codab_from_blob(
+    iso3: str, admin_level: int = 0, aoi_only: bool = False
+):
     iso3 = iso3.lower()
     if aoi_only:
         if iso3 != "cub":
