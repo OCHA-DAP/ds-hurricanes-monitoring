@@ -48,7 +48,11 @@ df
 df = pd.DataFrame(
     columns=["name", "email", "cub", "all"],
     data=[
-        ["TEST_NAME", "downing.tristan@gmail.com", "to", "to"],
+        # OCHA HQ
+        ["Jacopo Damelio", "jacopo.damelio@un.org", "to", "to"],
+        ["Nicolas Rost", "rostn@un.org", "to", "to"],
+        # me
+        ["Tristan Downing", "tristan.downing@un.org", "cc", "cc"],
     ],
 )
 df
@@ -58,4 +62,8 @@ df
 blob_name = f"{blob.PROJECT_PREFIX}/email/distribution_list.csv"
 blob.upload_csv_to_blob(blob_name, df)
 df
+```
+
+```python
+
 ```
