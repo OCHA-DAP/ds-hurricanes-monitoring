@@ -51,8 +51,10 @@ df = pd.DataFrame(
         # OCHA HQ
         ["Jacopo Damelio", "jacopo.damelio@un.org", "to", "to"],
         ["Nicolas Rost", "rostn@un.org", "to", "to"],
-        # me
+        # CHD DS
         ["Tristan Downing", "tristan.downing@un.org", "cc", "cc"],
+        ["Zachary Arno", "zachary.arno@un.org", "cc", "cc"],
+        ["Pauline Ndirangu", "pauline.ndirangu@un.org", "cc", "cc"],
     ],
 )
 df
