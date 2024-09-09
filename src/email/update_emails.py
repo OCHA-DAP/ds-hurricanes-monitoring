@@ -1,3 +1,4 @@
+import traceback
 from typing import Literal
 
 import pandas as pd
@@ -28,7 +29,9 @@ def update_fcast_info_emails(
             columns=["monitor_id", "atcf_id", "geography", "email_type"]
         )
     if TEST_STORM:
-        df_monitoring = add_test_row_to_monitoring(df_monitoring, "fcast")
+        df_monitoring = add_test_row_to_monitoring(
+            df_monitoring, "fcast", geography
+        )
         df_existing_email_record = df_existing_email_record[
             ~(
                 (df_existing_email_record["atcf_id"] == TEST_ATCF_ID)
@@ -37,23 +40,27 @@ def update_fcast_info_emails(
         ]
 
     dicts = []
-    for monitor_id, row in df_monitoring.set_index("monitor_id").iterrows():
-        if row["min_dist"] > MIN_EMAIL_DISTANCE:
-            if verbose:
-                print(
-                    f"min_dist is {row['min_dist']}, "
-                    f"skipping info email for {monitor_id}"
-                )
-            continue
-        if (
-            monitor_id
-            in df_existing_email_record[
-                df_existing_email_record["email_type"] == "info"
-            ]["monitor_id"].unique()
-        ):
-            if verbose:
-                print(f"already sent info email for {monitor_id}")
-        else:
+    if geography == "cub":
+        for monitor_id, row in df_monitoring.set_index(
+            "monitor_id"
+        ).iterrows():
+            if row["min_dist"] > MIN_EMAIL_DISTANCE:
+                if verbose:
+                    print(
+                        f"min_dist is {row['min_dist']}, "
+                        f"skipping info email for {monitor_id}"
+                    )
+                continue
+            if (
+                monitor_id
+                in df_existing_email_record[
+                    (df_existing_email_record["email_type"] == "info")
+                    & (df_existing_email_record["geography"] == geography)
+                ]["monitor_id"].unique()
+            ):
+                if verbose:
+                    print(f"already sent info email for {monitor_id}")
+                continue
             try:
                 print(f"sending info email for {monitor_id}")
                 send_info_email(
@@ -71,6 +78,9 @@ def update_fcast_info_emails(
                 )
             except Exception as e:
                 print(f"could not send info email for {monitor_id}: {e}")
+                traceback.print_exc()
+    elif geography == "all":
+        pass
 
     df_new_email_record = pd.DataFrame(dicts)
     df_combined_email_record = pd.concat(

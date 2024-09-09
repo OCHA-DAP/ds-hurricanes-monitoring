@@ -29,10 +29,11 @@ from tqdm.auto import tqdm
 from src.datasources import codab, nhc
 from src.monitoring import monitoring_utils
 from src.utils import blob
+from src.constants import *
 ```
 
 ```python
-adm = codab.load_combined_codab()
+adm = codab.load_combined_codab().to_crs(3857)
 ```
 
 ```python
@@ -40,24 +41,32 @@ adm.plot()
 ```
 
 ```python
-adm
+adm[adm["ADM_PCODE"] == "KN"]
 ```
 
 ```python
-clobber = False
-verbose = False
+clobber = True
+verbose = True
 thorough_check = False
 ```
 
 ```python
 blob_name = monitoring_utils.get_blob_name("fcast", "all")
-df_existing_monitoring = blob.load_parquet_from_blob(blob_name)
-df_existing_monitoring
+df = blob.load_parquet_from_blob(blob_name)
+df
+```
+
+```python
+df[df["min_dist"] == 0]
 ```
 
 ```python
 df_tracks = nhc.load_recent_glb_forecasts()
 df_tracks = df_tracks[df_tracks["basin"] == "al"]
+```
+
+```python
+monitor_id in df_existing_monitoring["monitor_id"].unique()
 ```
 
 ```python
@@ -124,7 +133,11 @@ df_new_monitoring = pd.DataFrame(dicts)
 ```
 
 ```python
-df_new_monitoring
+df_existing_monitoring[df_existing_monitoring["ADM_PCODE"] == HAVANA1]
+```
+
+```python
+df_new_monitoring[df_new_monitoring["ADM_PCODE"] == HAVANA1]
 ```
 
 ```python
@@ -143,4 +156,8 @@ blob.upload_parquet_to_blob(blob_name, df_monitoring_combined)
 
 ```python
 df_monitoring_combined
+```
+
+```python
+blob.upload_parquet_to_blob(blob_name, df_monitoring_combined)
 ```

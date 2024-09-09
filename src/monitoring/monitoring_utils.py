@@ -28,17 +28,25 @@ def update_fcast_monitoring(
     geography: Literal["cub", "all"],
     clobber: bool = False,
     verbose: bool = False,
+    disable_progress_bar: bool = True,
 ):
     if geography == "cub":
         update_cub_fcast_monitoring(clobber=clobber, verbose=verbose)
     elif geography == "all":
-        update_all_fcast_monitoring(clobber=clobber, verbose=verbose)
+        update_all_fcast_monitoring(
+            clobber=clobber,
+            verbose=verbose,
+            disable_progress_bar=disable_progress_bar,
+        )
     else:
         raise ValueError(f"geography {geography} not recognized")
 
 
 def update_all_fcast_monitoring(
-    clobber: bool = False, verbose: bool = False, thorough_check: bool = False
+    clobber: bool = False,
+    verbose: bool = False,
+    thorough_check: bool = False,
+    disable_progress_bar: bool = True,
 ):
     adm = codab.load_combined_codab().to_crs(3857)
     blob_name = get_blob_name("fcast", "all")
@@ -47,7 +55,7 @@ def update_all_fcast_monitoring(
     df_tracks = df_tracks[df_tracks["basin"] == "al"]
     dicts = []
     for issue_time, issue_group in tqdm(
-        df_tracks.groupby("issuance"), disable=not verbose
+        df_tracks.groupby("issuance"), disable=disable_progress_bar
     ):
         if not thorough_check and not clobber:
             if issue_time in df_existing_monitoring["issue_time"].to_list():
@@ -72,6 +80,7 @@ def update_all_fcast_monitoring(
                 ),
                 crs="EPSG:4326",
             ).to_crs(3857)
+            gdf["leadtime"] = gdf["validTime"] - issue_time
             for pcode, row in adm.set_index("ADM_PCODE").iterrows():
                 monitor_id = (
                     f"{atcf_id}_fcast_"
@@ -85,9 +94,9 @@ def update_all_fcast_monitoring(
                         print(f"already monitored for {monitor_id}")
                     continue
                 else:
-                    print(f"monitoring for {monitor_id}")
+                    if verbose:
+                        print(f"monitoring for {monitor_id}")
                 gdf["distance"] = gdf.geometry.distance(row.geometry) / 1000
-                gdf["leadtime"] = gdf["validTime"] - issue_time
 
                 landfall_row = gdf.loc[gdf["distance"].idxmin()]
                 time_to_landfall = landfall_row["leadtime"]

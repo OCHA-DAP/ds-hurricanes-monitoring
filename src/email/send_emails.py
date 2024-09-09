@@ -10,6 +10,7 @@ import pytz
 from html2text import html2text
 from jinja2 import Environment, FileSystemLoader
 
+from src.constants import MIN_EMAIL_DISTANCE
 from src.email.plotting import get_plot_blob_name
 from src.email.utils import (
     EMAIL_ADDRESS,
@@ -36,8 +37,111 @@ def send_info_email(
 ):
     if geography == "cub":
         send_cub_info_email(monitor_id, fcast_obsv)
+    elif geography == "all":
+        send_all_info_email(monitor_id, fcast_obsv)
     else:
         raise NotImplementedError("Only Cuba is supported for now")
+
+
+def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
+    df_monitoring = monitoring_utils.load_existing_monitoring_points(
+        fcast_obsv, geography="all"
+    )
+    df_monitoring["email_monitor_id"] = df_monitoring["monitor_id"].apply(
+        lambda x: "_".join(x.split("_")[:-1])
+    )
+    monitoring_group = df_monitoring[
+        (df_monitoring["email_monitor_id"] == monitor_id)
+    ]
+
+    relevant_monitoring_group = monitoring_group[
+        monitoring_group["min_dist"] < MIN_EMAIL_DISTANCE
+    ]
+    cols = ["ADM_PCODE"]
+    adms_dict = relevant_monitoring_group[cols].to_dict("records")
+
+    ny_tz = pytz.timezone("America/New_York")
+    cyclone_name = monitoring_group.iloc[0]["name"]
+    issue_time = monitoring_group.iloc[0]["issue_time"]
+    issue_time_ny = issue_time.astimezone(ny_tz)
+    pub_time = issue_time_ny.strftime("%H:%M")
+    pub_date = issue_time_ny.strftime("%-d %b %Y")
+    fcast_obsv_str = "observation" if fcast_obsv == "obsv" else "forecast"
+
+    distribution_list = get_distribution_list()
+    to_list = distribution_list[distribution_list["cub"] == "to"]
+    cc_list = distribution_list[distribution_list["cub"] == "cc"]
+
+    test_subject = "TEST: " if TEST_STORM else ""
+
+    environment = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+
+    template_name = "informational_all"
+    template = environment.get_template(f"{template_name}.html")
+    msg = EmailMessage()
+    msg.set_charset("utf-8")
+    msg["Subject"] = (
+        f"{test_subject}Cuba – {cyclone_name} "
+        f"forecast issued {pub_time}, {pub_date} "
+    )
+    msg["From"] = Address(
+        "OCHA Centre for Humanitarian Data",
+        EMAIL_ADDRESS.split("@")[0],
+        EMAIL_ADDRESS.split("@")[1],
+    )
+    msg["To"] = [
+        Address(
+            row["name"],
+            row["email"].split("@")[0],
+            row["email"].split("@")[1],
+        )
+        for _, row in to_list.iterrows()
+    ]
+    msg["Cc"] = [
+        Address(
+            row["name"],
+            row["email"].split("@")[0],
+            row["email"].split("@")[1],
+        )
+        for _, row in cc_list.iterrows()
+    ]
+
+    chd_banner_cid = make_msgid(domain="humdata.org")
+    ocha_logo_cid = make_msgid(domain="humdata.org")
+
+    html_str = template.render(
+        name=cyclone_name,
+        pub_time=pub_time,
+        pub_date=pub_date,
+        fcast_obsv=fcast_obsv_str,
+        test_email=TEST_STORM,
+        adms=adms_dict,
+        chd_banner_cid=chd_banner_cid[1:-1],
+        ocha_logo_cid=ocha_logo_cid[1:-1],
+    )
+    text_str = html2text(html_str)
+    msg.set_content(text_str)
+    msg.add_alternative(html_str, subtype="html")
+
+    for filename, cid in zip(
+        ["centre_banner.png", "ocha_logo_wide.png"],
+        [chd_banner_cid, ocha_logo_cid],
+    ):
+        img_path = STATIC_DIR / filename
+        with open(img_path, "rb") as img:
+            msg.get_payload()[1].add_related(
+                img.read(), "image", "png", cid=cid
+            )
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, context=context) as server:
+        server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+        server.sendmail(
+            EMAIL_ADDRESS,
+            to_list["email"].tolist() + cc_list["email"].tolist(),
+            msg.as_string(),
+        )
 
 
 def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
@@ -45,7 +149,9 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         fcast_obsv, geography="cub"
     )
     if monitor_id in [TEST_FCAST_MONITOR_ID, TEST_OBSV_MONITOR_ID]:
-        df_monitoring = add_test_row_to_monitoring(df_monitoring, fcast_obsv)
+        df_monitoring = add_test_row_to_monitoring(
+            df_monitoring, fcast_obsv, geography="cub"
+        )
     monitoring_point = df_monitoring.set_index("monitor_id").loc[monitor_id]
     ny_tz = pytz.timezone("America/New_York")
     cyclone_name = monitoring_point["name"]
@@ -66,7 +172,7 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
 
     environment = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
-    template_name = "informational"
+    template_name = "informational_cub"
     template = environment.get_template(f"{template_name}.html")
     msg = EmailMessage()
     msg.set_charset("utf-8")

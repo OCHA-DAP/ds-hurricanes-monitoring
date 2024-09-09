@@ -52,7 +52,9 @@ def update_plots(
         fcast_obsv, geography
     )
     if TEST_STORM:
-        df_monitoring = add_test_row_to_monitoring(df_monitoring, fcast_obsv)
+        df_monitoring = add_test_row_to_monitoring(
+            df_monitoring, fcast_obsv, geography
+        )
     existing_plot_blobs = blob.list_container_blobs(
         name_starts_with=f"{blob.PROJECT_PREFIX}/plots/{fcast_obsv}/"
     )
