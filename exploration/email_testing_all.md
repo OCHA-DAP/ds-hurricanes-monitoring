@@ -28,7 +28,7 @@ import geopandas as gpd
 import pandas as pd
 from tqdm.auto import tqdm
 
-from src.constants import MIN_EMAIL_DISTANCE
+from src.constants import *
 from src.email.send_emails import send_info_email
 from src.email.utils import (
     TEST_ATCF_ID,
@@ -39,6 +39,10 @@ from src.email.utils import (
 from src.monitoring import monitoring_utils
 from src.utils import blob
 from src.datasources import codab
+```
+
+```python
+send_info_email("al022024_fcast_2024-07-02T15:00:00", "fcast", "all")
 ```
 
 ```python
@@ -84,46 +88,13 @@ df_monitoring["email_monitor_id"] = df_monitoring["monitor_id"].apply(
 ```
 
 ```python
-dicts = []
-for email_monitor_id, email_group in df_monitoring.groupby("email_monitor_id"):
-    if email_group["min_dist"].min() > MIN_EMAIL_DISTANCE:
-        if verbose:
-            print(
-                f"min of min_dist is {email_group['min_dist'].min()}, "
-                f"skipping info email for {email_monitor_id}"
-            )
-        continue
-    if (
-        email_monitor_id
-        in df_existing_email_record[
-            (df_existing_email_record["email_type"] == "info")
-            & (df_existing_email_record["geography"] == geography)
-        ]["monitor_id"].unique()
-    ):
-        if verbose:
-            print(f"already sent info email for {monitor_id}")
-        continue
-
-    try:
-        print(f"sending info email for {email_monitor_id}")
-        send_info_email(
-            monitor_id=email_monitor_id,
-            fcast_obsv="fcast",
-            geography=geography,
-        )
-        dicts.append(
-            {
-                "monitor_id": email_monitor_id,
-                "atcf_id": email_group.iloc[0]["atcf_id"],
-                "geography": geography,
-                "email_type": "info",
-            }
-        )
-    except Exception as e:
-        print(f"could not send info email for {email_monitor_id}: {e}")
-        traceback.print_exc()
+df_relevant = df_monitoring[df_monitoring["min_dist"] < 250]
 ```
 
 ```python
-pd.DataFrame([{"ADM_NAME": "SADF"}, {"ADM_NAME": "fds"}]).to_dict("records")
+df_relevant.groupby("email_monitor_id")["closest_s"].max()
+```
+
+```python
+df_relevant
 ```

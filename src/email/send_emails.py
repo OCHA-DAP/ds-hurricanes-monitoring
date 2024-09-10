@@ -10,7 +10,9 @@ import pytz
 from html2text import html2text
 from jinja2 import Environment, FileSystemLoader
 
-from src.constants import MIN_EMAIL_DISTANCE
+from src.constants import ALL_MIN_EMAIL_DISTANCE
+from src.datasources import codab
+from src.datasources.ibtracs import speed2strcat
 from src.email.plotting import get_plot_blob_name
 from src.email.utils import (
     EMAIL_ADDRESS,
@@ -44,6 +46,7 @@ def send_info_email(
 
 
 def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
+    adm = codab.load_combined_codab()
     df_monitoring = monitoring_utils.load_existing_monitoring_points(
         fcast_obsv, geography="all"
     )
@@ -54,11 +57,20 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         (df_monitoring["email_monitor_id"] == monitor_id)
     ]
 
-    relevant_monitoring_group = monitoring_group[
-        monitoring_group["min_dist"] < MIN_EMAIL_DISTANCE
-    ]
-    cols = ["ADM_PCODE"]
-    adms_dict = relevant_monitoring_group[cols].to_dict("records")
+    adm_email_content = monitoring_group[
+        monitoring_group["min_dist"] < ALL_MIN_EMAIL_DISTANCE
+    ].copy()
+    adm_email_content = adm_email_content.merge(adm[["ADM_PCODE", "ADM_NAME"]])
+    adm_email_content["category"] = adm_email_content["closest_s"].apply(
+        speed2strcat
+    )
+    int_cols = ["min_dist", "closest_s"]
+    adm_email_content[int_cols] = adm_email_content[int_cols].astype(int)
+    adm_email_content["hours_to_closest"] = (
+        adm_email_content["time_to_closest"]
+        .apply(lambda x: x.total_seconds() / 3600)
+        .astype(int)
+    )
 
     ny_tz = pytz.timezone("America/New_York")
     cyclone_name = monitoring_group.iloc[0]["name"]
@@ -69,8 +81,8 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     fcast_obsv_str = "observation" if fcast_obsv == "obsv" else "forecast"
 
     distribution_list = get_distribution_list()
-    to_list = distribution_list[distribution_list["cub"] == "to"]
-    cc_list = distribution_list[distribution_list["cub"] == "cc"]
+    to_list = distribution_list[distribution_list["all"] == "to"]
+    cc_list = distribution_list[distribution_list["all"] == "cc"]
 
     test_subject = "TEST: " if TEST_STORM else ""
 
@@ -81,7 +93,7 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     msg = EmailMessage()
     msg.set_charset("utf-8")
     msg["Subject"] = (
-        f"{test_subject}Cuba – {cyclone_name} "
+        f"{test_subject}Hurricane Monitoring – {cyclone_name} "
         f"forecast issued {pub_time}, {pub_date} "
     )
     msg["From"] = Address(
@@ -114,8 +126,10 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         pub_time=pub_time,
         pub_date=pub_date,
         fcast_obsv=fcast_obsv_str,
+        geography="Caribbean",
         test_email=TEST_STORM,
-        adms=adms_dict,
+        adms=adm_email_content.to_dict(orient="records"),
+        min_email_dist=ALL_MIN_EMAIL_DISTANCE,
         chd_banner_cid=chd_banner_cid[1:-1],
         ocha_logo_cid=ocha_logo_cid[1:-1],
     )
@@ -211,6 +225,7 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         pub_time=pub_time,
         pub_date=pub_date,
         fcast_obsv=fcast_obsv_str,
+        geography="Cuba",
         test_email=TEST_STORM,
         min_dist=int(min_dist),
         closest_s=int(closest_s),

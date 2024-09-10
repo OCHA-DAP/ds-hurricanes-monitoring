@@ -8,6 +8,26 @@ from src.datasources import codab
 from src.utils import blob
 
 
+def speed2strcat(speed: float) -> str:
+    """Convert knots to hurricane category using Saffir-Simpson scale."""
+    if speed < 0:
+        raise ValueError("Wind speed must be positive")
+    elif speed < 18:
+        return "Tropical Depression"
+    elif speed < 33:
+        return "Tropical Storm"
+    elif speed < 64:
+        return "Category 1"
+    elif speed < 83:
+        return "Category 2"
+    elif speed < 96:
+        return "Category 3"
+    elif speed < 113:
+        return "Category 4"
+    else:
+        return "Category 5"
+
+
 def load_ibtracs_with_wind(wind_provider: Literal["usa", "wmo"] = "wmo"):
     """Load IBTrACS data with wind speed data from a specific provider."""
     blob_name = f"ibtracs/ibtracs_with_{wind_provider}_wind.parquet"

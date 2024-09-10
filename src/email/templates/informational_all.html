@@ -12,10 +12,16 @@
     The {{ fcast_obsv }} for {{ name }} produced at {{ pub_time }} on {{ pub_date }} (New York time) has been published by the NOAA National Hurricane Center, operators of Regional Specialized Meteorological Centre (RSMC) Miami.
   </p>
   <p>
-    The countries (or, in the case of large countries, top-level administrative divisions) that the storm is forecast to pass within 1,000 km of are listed below.
+    The countries (or, in the case of large countries, top-level administrative divisions) that the storm is forecast to pass within
+    {{ min_email_dist }} km of are listed below.
   </p>
   {% for adm in adms %}
-    <h3>{{ adm.ADM_PCODE }}</h3>
+      <h3>{{ adm.ADM_NAME }}</h3>
+      <p>
+        Forecasted closest pass: <b>{{ adm.min_dist }} km</b><br>
+        Maximum windspeed while at closest pass: <b>{{ adm.closest_s }} knots ({{ adm.category }})</b>
+        Time to closest pass: <b>{{ adm.hours_to_closest }} hours</b>
+      </p>
   {% endfor %}
   <p>
     The code used to produce this alert is available on GitHub <a href="https://github.com/OCHA-DAP/ds-hurricane-monitoring">here</a>.
