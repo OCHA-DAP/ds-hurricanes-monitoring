@@ -70,6 +70,9 @@ def add_test_row_to_monitoring(
             df_monitoring = pd.concat(
                 [df_monitoring, df_monitoring_test], ignore_index=True
             )
+        elif geography == "all":
+            print("not yet implemented for geography=all")
+            return df_monitoring
         else:
             raise NotImplementedError(f"invalid geography: {geography}")
     else:

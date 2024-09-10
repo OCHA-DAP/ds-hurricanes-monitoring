@@ -49,12 +49,12 @@ df = pd.DataFrame(
     columns=["name", "email", "cub", "all"],
     data=[
         # OCHA HQ
-        ["Jacopo Damelio", "jacopo.damelio@un.org", "to", "to"],
-        ["Nicolas Rost", "rostn@un.org", "to", "to"],
+        ["Jacopo Damelio", "jacopo.damelio@un.org", "to", None],
+        ["Nicolas Rost", "rostn@un.org", "to", None],
         # CHD DS
-        ["Tristan Downing", "tristan.downing@un.org", "cc", "cc"],
-        ["Zachary Arno", "zachary.arno@un.org", "cc", "cc"],
-        ["Pauline Ndirangu", "pauline.ndirangu@un.org", "cc", "cc"],
+        ["Tristan Downing", "tristan.downing@un.org", "cc", "to"],
+        ["Zachary Arno", "zachary.arno@un.org", "cc", None],
+        ["Pauline Ndirangu", "pauline.ndirangu@un.org", "cc", None],
     ],
 )
 df

@@ -115,17 +115,33 @@ def load_gdf_from_blob(
     shapefile: str = None,
     stage: Literal["prod", "dev"] = "dev",
     container_name: str = "projects",
+    clobber: bool = False,
+    verbose: bool = False,
 ):
-    blob_data = load_blob_data(
-        blob_name, stage=stage, container_name=container_name
-    )
-    with zipfile.ZipFile(io.BytesIO(blob_data), "r") as zip_ref:
-        zip_ref.extractall("temp")
-        if shapefile is None:
-            shapefile = [f for f in zip_ref.namelist() if f.endswith(".shp")][
-                0
-            ]
-        gdf = gpd.read_file(f"temp/{shapefile}")
+    local_temp_dir = f"temp/{blob_name}"
+    if not clobber and os.path.exists(local_temp_dir):
+        if verbose:
+            print(f"{local_temp_dir} already exists, skipping download")
+    else:
+        blob_data = load_blob_data(
+            blob_name, stage=stage, container_name=container_name
+        )
+        with zipfile.ZipFile(io.BytesIO(blob_data), "r") as zip_ref:
+            zip_ref.extractall(local_temp_dir)
+    if shapefile is None:
+        if verbose:
+            print("shapefile not specified, using first .shp file found")
+            print("iterating over all subdirectories")
+        for root, dirs, files in os.walk(local_temp_dir):
+            for file in files:
+                if verbose:
+                    print(f"checking {file}")
+                if file.endswith(".shp"):
+                    shapefile = file
+                    break
+            if shapefile is not None:
+                break
+    gdf = gpd.read_file(f"{local_temp_dir}/{shapefile.removesuffix('.shp')}")
     return gdf
 
 
