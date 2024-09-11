@@ -1,11 +1,73 @@
 from typing import Literal
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
+from tqdm.auto import tqdm
 
-from src.constants import PROJ_CRS
+from src.constants import KNOTS_TO_MS, MIN_YEAR, PROJ_CRS
 from src.datasources import codab
 from src.utils import blob
+
+
+def estimate_rmax(
+    vmax: np.ndarray, A: float = 46.6, B: float = 0.2
+) -> np.ndarray:
+    """Estimate the radius of maximum winds from the maximum wind speed.
+
+    From Willoughby, H. E., Darling, R. W. R., & Rahn, M. E. (2006).
+    Parametric Representation of the Primary Hurricane Vortex.
+    Part II: A New Family of Sectionally Continuous Profiles.
+    Monthly Weather Review, 134(4), 1102–1120.
+
+    vmax: float
+        Maximum wind speed in m/s.
+    A: float
+        Scaling factor.
+    B: float
+        Scaling exponent.
+
+    Returns:
+    --------
+    float
+        Radius of maximum winds in km.
+    """
+    return A * vmax**-B
+
+
+def estimate_wind_at_distance(
+    vmax: np.ndarray, distance: float, rmax: np.ndarray = None, B: float = 1.5
+) -> np.ndarray:
+    """Estimate the wind speed at a given distance from the center.
+
+    From Vickery, P. J., & Wadhera, D. (2008).
+    Statistical models of hurricane wind and storm surge: Update.
+    Journal of Applied Meteorology and Climatology, 47(6), 1741-1751.
+
+    vmax: float
+        Maximum wind speed in knots.
+    distance: float
+        Distance from the center in km.
+    rmax: float
+        Radius of maximum winds in km.
+    B: float
+        Scaling exponent.
+
+    Returns:
+    --------
+    float
+        Wind speed in knots.
+    """
+    vmax = vmax * KNOTS_TO_MS
+    if rmax is None:
+        rmax = estimate_rmax(vmax)
+    wind_speed = np.where(
+        distance < rmax,
+        vmax / KNOTS_TO_MS,
+        (vmax * (rmax / distance) ** B * np.exp(1 - (rmax / distance) ** B))
+        / KNOTS_TO_MS,
+    )
+    return wind_speed
 
 
 def speed2strcat(speed: float) -> str:
@@ -35,6 +97,87 @@ def load_ibtracs_with_wind(wind_provider: Literal["usa", "wmo"] = "wmo"):
         blob_name, stage="dev", container_name="global"
     )
     return df
+
+
+def load_all_adm_wind_stats():
+    blob_name = (
+        f"{blob.PROJECT_PREFIX}/processed/ibtracs/all_adm_wind_stats.parquet"
+    )
+    return blob.load_parquet_from_blob(blob_name)
+
+
+def estimate_current_rp(pcodes, adm_winds):
+    df_stats = load_all_adm_wind_stats()
+    est_rps = []
+    for pcode, adm_wind in zip(pcodes, adm_winds):
+        df_adm = df_stats[df_stats["ADM_PCODE"] == pcode]
+        df_adm = df_adm.sort_values("rp")
+        est_rps.append(
+            np.interp(
+                adm_wind,
+                df_adm["adm_wind"],
+                df_adm["rp"],
+                right=np.inf,
+                left=0,
+            )
+        )
+    return est_rps
+
+
+def load_sid_names():
+    blob_name = f"{blob.PROJECT_PREFIX}/processed/ibtracs/sid_name.parquet"
+    return blob.load_parquet_from_blob(blob_name)
+
+
+def process_sid_names():
+    df_tracks = load_ibtracs_with_wind(wind_provider="usa")
+    df_out = df_tracks.groupby("sid")["name"].first().reset_index()
+    df_out["year"] = df_out["sid"].str[:4].astype(int)
+    df_out["nameyear"] = (
+        df_out["name"].str.capitalize() + " " + df_out["year"].astype(str)
+    )
+    blob_name = f"{blob.PROJECT_PREFIX}/processed/ibtracs/sid_name.parquet"
+    blob.upload_parquet_to_blob(blob_name, df_out)
+
+
+def calculate_all_adm_wind_stats():
+    adm = codab.load_combined_codab().to_crs(PROJ_CRS)
+    df = load_ibtracs_with_wind(wind_provider="usa")
+    df = df[df["time"].dt.year >= MIN_YEAR]
+    df = df[df["basin"] == "NA"]
+    total_years = df["time"].dt.year.nunique()
+    gdf = gpd.GeoDataFrame(
+        data=df, geometry=gpd.points_from_xy(df["lon"], df["lat"]), crs=4326
+    ).to_crs(PROJ_CRS)
+    dfs = []
+    for pcode, adm_row in tqdm(
+        adm.set_index("ADM_PCODE").iterrows(), total=len(adm)
+    ):
+        gdf["distance"] = gdf.geometry.distance(adm_row.geometry) / 1000
+        gdf["adm_wind"] = estimate_wind_at_distance(
+            gdf["usa_wind"], gdf["distance"]
+        )
+        df_in = gdf.groupby("sid")["adm_wind"].max().reset_index()
+        df_in["ADM_PCODE"] = pcode
+        dfs.append(df_in)
+
+    df_stats = pd.concat(dfs, ignore_index=True)
+
+    def calc_rp(group):
+        group["rp"] = group["adm_wind"].apply(
+            lambda x: (total_years + 1) / len(group[group["adm_wind"] >= x])
+        )
+        return group
+
+    df_stats = (
+        df_stats.groupby("ADM_PCODE")
+        .apply(calc_rp, include_groups=False)
+        .reset_index(level=0)
+    )
+    blob_name = (
+        f"{blob.PROJECT_PREFIX}/processed/ibtracs/all_adm_wind_stats.parquet"
+    )
+    blob.upload_parquet_to_blob(blob_name, df_stats)
 
 
 def process_havana_distances():

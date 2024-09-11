@@ -6,6 +6,7 @@ from email.message import EmailMessage
 from email.utils import make_msgid
 from typing import Literal
 
+import numpy as np
 import pytz
 from html2text import html2text
 from jinja2 import Environment, FileSystemLoader
@@ -61,6 +62,12 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         (df_monitoring["email_monitor_id"] == monitor_id)
     ]
 
+    def adm_wind_rp_str(adm_wind_rp):
+        if adm_wind_rp == np.inf:
+            return "> 25 (strongest storm since at least 2000)"
+        else:
+            return f"{adm_wind_rp:.1f}"
+
     adm_email_content = monitoring_group[
         monitoring_group["min_dist"] < ALL_MIN_EMAIL_DISTANCE
     ].copy()
@@ -68,14 +75,22 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     adm_email_content["category"] = adm_email_content["closest_s"].apply(
         speed2strcat
     )
-    int_cols = ["min_dist", "closest_s"]
+    int_cols = ["min_dist", "closest_s", "max_adm_wind"]
     adm_email_content[int_cols] = adm_email_content[int_cols].astype(int)
     adm_email_content["hours_to_closest"] = (
         adm_email_content["time_to_closest"]
         .apply(lambda x: x.total_seconds() / 3600)
         .astype(int)
     )
-    adm_email_content = adm_email_content.sort_values("min_dist")
+    adm_email_content["short_name"] = adm_email_content["ADM_NAME"].str.split(
+        r"\ \(", expand=True
+    )[0]
+    adm_email_content["adm_wind_rp_str"] = adm_email_content[
+        "adm_wind_rp"
+    ].apply(adm_wind_rp_str)
+    adm_email_content = adm_email_content.sort_values(
+        "adm_wind_rp", ascending=False
+    )
 
     ny_tz = pytz.timezone("America/New_York")
     cyclone_name = monitoring_group.iloc[0]["name"]

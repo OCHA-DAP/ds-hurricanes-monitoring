@@ -13,13 +13,15 @@
   </p>
   <p>
     The countries (or, in the case of large countries, top-level administrative divisions) that the storm is forecast to pass within
-    {{ min_email_dist }} km of are listed below, with the closest passes listed first.
+    {{ min_email_dist }} km of are listed below, with the highest estimated return periods listed first.
   </p>
   {% for adm in adms %}
       <h3>{{ adm.ADM_NAME }}</h3>
       <p>
+        Estimated maximum wind speed on land in {{ adm.short_name }}: <b>{{ adm.max_adm_wind }} knots</b><br>
+        Estimated return period based on maximum wind speed on land: <b>{{ adm.adm_wind_rp_str }} years</b><br>
         Forecasted closest pass: <b>{{ adm.min_dist }} km</b><br>
-        Maximum windspeed while at closest pass: <b>{{ adm.closest_s }} knots ({{ adm.category }})</b><br>
+        Maximum wind speed (centre of storm) while at closest pass: <b>{{ adm.closest_s }} knots ({{ adm.category }})</b><br>
         Time to closest pass: <b>{{ adm.hours_to_closest }} hours</b>
       </p>
   {% endfor %}

@@ -57,7 +57,15 @@ df
 ```
 
 ```python
-df[df["min_dist"] == 0]
+
+```
+
+```python
+df[df["max_adm_wind"] > df["closest_s"]]
+```
+
+```python
+df[df["min_dist"] < 100]
 ```
 
 ```python

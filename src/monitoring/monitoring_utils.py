@@ -4,7 +4,8 @@ import geopandas as gpd
 import pandas as pd
 from tqdm.auto import tqdm
 
-from src.datasources import codab, nhc
+from src.datasources import codab, ibtracs, nhc
+from src.datasources.ibtracs import estimate_wind_at_distance
 from src.utils import blob
 
 
@@ -97,10 +98,17 @@ def update_all_fcast_monitoring(
                     if verbose:
                         print(f"monitoring for {monitor_id}")
                 gdf["distance"] = gdf.geometry.distance(row.geometry) / 1000
+                gdf["adm_wind"] = estimate_wind_at_distance(
+                    gdf["maxwind"], gdf["distance"]
+                )
 
                 landfall_row = gdf.loc[gdf["distance"].idxmin()]
                 time_to_landfall = landfall_row["leadtime"]
                 landfall_s = landfall_row["maxwind"]
+
+                maxwind_row = gdf.loc[gdf["adm_wind"].idxmax()]
+                time_to_maxwind = maxwind_row["leadtime"]
+                max_adm_wind = maxwind_row["adm_wind"]
 
                 dicts.append(
                     {
@@ -112,9 +120,15 @@ def update_all_fcast_monitoring(
                         "time_to_closest": time_to_landfall,
                         "closest_s": landfall_s,
                         "min_dist": gdf["distance"].min(),
+                        "time_to_maxwind": time_to_maxwind,
+                        "max_adm_wind": max_adm_wind,
                     }
                 )
     df_new_monitoring = pd.DataFrame(dicts)
+    if not df_new_monitoring.empty:
+        df_new_monitoring["adm_wind_rp"] = ibtracs.estimate_current_rp(
+            df_new_monitoring["ADM_PCODE"], df_new_monitoring["max_adm_wind"]
+        )
     if clobber:
         df_monitoring_combined = df_new_monitoring
     else:
