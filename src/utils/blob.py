@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import zipfile
+from pathlib import Path
 from typing import Literal
 
 import geopandas as gpd
@@ -118,7 +119,7 @@ def load_gdf_from_blob(
     clobber: bool = False,
     verbose: bool = False,
 ):
-    local_temp_dir = f"temp/{blob_name}"
+    local_temp_dir = Path(f"temp/{blob_name}")
     if not clobber and os.path.exists(local_temp_dir):
         if verbose:
             print(f"{local_temp_dir} already exists, skipping download")
@@ -141,7 +142,10 @@ def load_gdf_from_blob(
                     break
             if shapefile is not None:
                 break
-    gdf = gpd.read_file(f"{local_temp_dir}/{shapefile.removesuffix('.shp')}")
+    local_temp_path = local_temp_dir / shapefile
+    if not local_temp_path.exists():
+        local_temp_path = local_temp_dir / shapefile.removesuffix(".shp")
+    gdf = gpd.read_file(local_temp_path)
     return gdf
 
 
