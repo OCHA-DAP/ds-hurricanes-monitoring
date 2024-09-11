@@ -71,7 +71,26 @@ def add_test_row_to_monitoring(
                 [df_monitoring, df_monitoring_test], ignore_index=True
             )
         elif geography == "all":
-            print("not yet implemented for geography=all")
+            df_monitoring_test = df_monitoring[
+                df_monitoring["monitor_id"].str.contains(
+                    "al022024_fcast_2024-06-29T09:00:00"
+                )
+            ].copy()
+            df_monitoring_test[
+                [
+                    "name",
+                    "atcf_id",
+                ]
+            ] = (
+                TEST_STORM_NAME,
+                TEST_ATCF_ID,
+            )
+            df_monitoring_test["monitor_id"] = (
+                TEST_FCAST_MONITOR_ID + "_" + df_monitoring_test["ADM_PCODE"]
+            )
+            df_monitoring = pd.concat(
+                [df_monitoring, df_monitoring_test], ignore_index=True
+            )
             return df_monitoring
         else:
             raise NotImplementedError(f"invalid geography: {geography}")

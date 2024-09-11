@@ -80,16 +80,6 @@ def update_fcast_info_emails(
                 print(f"could not send info email for {monitor_id}: {e}")
                 traceback.print_exc()
     elif geography == "all":
-        df_monitoring = monitoring_utils.load_existing_monitoring_points(
-            "fcast", geography
-        )
-        try:
-            df_existing_email_record = load_email_record()
-        except Exception as e:
-            print(f"could not load email record: {e}")
-            df_existing_email_record = pd.DataFrame(
-                columns=["monitor_id", "atcf_id", "geography", "email_type"]
-            )
         df_monitoring["email_monitor_id"] = df_monitoring["monitor_id"].apply(
             lambda x: "_".join(x.split("_")[:-1])
         )

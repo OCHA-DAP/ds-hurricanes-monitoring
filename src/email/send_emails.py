@@ -50,6 +50,10 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     df_monitoring = monitoring_utils.load_existing_monitoring_points(
         fcast_obsv, geography="all"
     )
+    if monitor_id in [TEST_FCAST_MONITOR_ID, TEST_OBSV_MONITOR_ID]:
+        df_monitoring = add_test_row_to_monitoring(
+            df_monitoring, fcast_obsv, geography="all"
+        )
     df_monitoring["email_monitor_id"] = df_monitoring["monitor_id"].apply(
         lambda x: "_".join(x.split("_")[:-1])
     )
@@ -71,6 +75,7 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         .apply(lambda x: x.total_seconds() / 3600)
         .astype(int)
     )
+    adm_email_content = adm_email_content.sort_values("min_dist")
 
     ny_tz = pytz.timezone("America/New_York")
     cyclone_name = monitoring_group.iloc[0]["name"]

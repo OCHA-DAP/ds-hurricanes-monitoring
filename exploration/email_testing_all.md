@@ -42,12 +42,11 @@ from src.datasources import codab
 ```
 
 ```python
-send_info_email("al022024_fcast_2024-07-02T15:00:00", "fcast", "all")
+geography = "all"
 ```
 
 ```python
-geography = "all"
-verbose = True
+send_info_email("al022024_fcast_2024-07-02T15:00:00", "fcast", "all")
 ```
 
 ```python
@@ -88,6 +87,10 @@ df_monitoring["email_monitor_id"] = df_monitoring["monitor_id"].apply(
 ```
 
 ```python
+df_monitoring["monitor_id"].str.contains("al02")
+```
+
+```python
 df_relevant = df_monitoring[df_monitoring["min_dist"] < 250]
 ```
 
@@ -96,5 +99,9 @@ df_relevant.groupby("email_monitor_id")["closest_s"].max()
 ```
 
 ```python
-df_relevant
+df_relevant.groupby("email_monitor_id").size()
+```
+
+```python
+
 ```
