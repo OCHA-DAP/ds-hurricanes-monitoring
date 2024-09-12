@@ -75,19 +75,19 @@ def speed2strcat(speed: float) -> str:
     if speed < 0:
         raise ValueError("Wind speed must be positive")
     elif speed < 18:
-        return "Tropical Depression"
+        return "Trop. Dep."
     elif speed < 33:
-        return "Tropical Storm"
+        return "Trop. Storm"
     elif speed < 64:
-        return "Category 1"
+        return "Cat. 1"
     elif speed < 83:
-        return "Category 2"
+        return "Cat. 2"
     elif speed < 96:
-        return "Category 3"
+        return "Cat. 3"
     elif speed < 113:
-        return "Category 4"
+        return "Cat. 4"
     else:
-        return "Category 5"
+        return "Cat. 5"
 
 
 def load_ibtracs_with_wind(wind_provider: Literal["usa", "wmo"] = "wmo"):
@@ -107,6 +107,8 @@ def load_all_adm_wind_stats():
 
 
 def estimate_current_rp(pcodes, adm_winds):
+    if not len(pcodes) == len(adm_winds):
+        raise ValueError("Length of pcodes and adm_winds must be equal")
     df_stats = load_all_adm_wind_stats()
     est_rps = []
     for pcode, adm_wind in zip(pcodes, adm_winds):
@@ -122,6 +124,25 @@ def estimate_current_rp(pcodes, adm_winds):
             )
         )
     return est_rps
+
+
+def get_similar_storms(pcodes, adm_winds, n_similar_storms: int = 3):
+    if not len(pcodes) == len(adm_winds):
+        raise ValueError("Length of pcodes and adm_winds must be equal")
+    df_sid_name = load_sid_names()
+    df_stats = load_all_adm_wind_stats()
+    df_stats = df_stats.merge(df_sid_name)
+    similar_storms = []
+    for pcode, adm_wind in zip(pcodes, adm_winds):
+        df_adm = df_stats[df_stats["ADM_PCODE"] == pcode].copy()
+        df_adm["wind_dif"] = df_adm["adm_wind"] - adm_wind
+        df_adm["wind_dif_abs"] = df_adm["wind_dif"].abs()
+        df_adm = df_adm.sort_values("wind_dif_abs")
+        df_similar = df_adm.iloc[:3]
+        cols = ["sid", "nameyear", "adm_wind"]
+        dicts_s = df_similar[cols].to_dict("records")
+        similar_storms.append(dicts_s)
+    return similar_storms
 
 
 def load_sid_names():

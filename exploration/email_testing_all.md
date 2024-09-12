@@ -46,7 +46,29 @@ geography = "all"
 ```
 
 ```python
-send_info_email("al022024_fcast_2024-07-02T15:00:00", "fcast", "all")
+df_existing_email_record = load_email_record()
+df_existing_email_record
+```
+
+```python
+MONITOR_ID_TO_DROP = "al022024_fcast_2024-07-02T21:00:00"
+```
+
+```python
+df_existing_email_record = df_existing_email_record[
+    (df_existing_email_record["monitor_id"] != MONITOR_ID_TO_DROP)
+    | (df_existing_email_record["geography"] != geography)
+]
+df_existing_email_record
+```
+
+```python
+blob_name = f"{blob.PROJECT_PREFIX}/email/email_record.csv"
+blob.upload_csv_to_blob(blob_name, df_existing_email_record)
+```
+
+```python
+len(df_existing_email_record)
 ```
 
 ```python

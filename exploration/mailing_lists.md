@@ -34,7 +34,7 @@ df = pd.DataFrame(
     columns=["name", "email", "cub", "all"],
     data=[
         ["TEST_NAME", "tristan.downing@un.org", "to", "to"],
-        ["TEST_NAME", "downing.tristan@gmail.com", "", ""],
+        ["TEST_NAME", "downing.tristan@gmail.com", "to", "to"],
     ],
 )
 blob_name = f"{blob.PROJECT_PREFIX}/email/test_distribution_list.csv"

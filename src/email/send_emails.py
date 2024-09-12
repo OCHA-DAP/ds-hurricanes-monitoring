@@ -13,7 +13,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from src.constants import ALL_MIN_EMAIL_DISTANCE
 from src.datasources import codab
-from src.datasources.ibtracs import speed2strcat
+from src.datasources.ibtracs import get_similar_storms, speed2strcat
 from src.email.plotting import get_plot_blob_name
 from src.email.utils import (
     EMAIL_ADDRESS,
@@ -91,6 +91,18 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     adm_email_content = adm_email_content.sort_values(
         "adm_wind_rp", ascending=False
     )
+    adm_email_content["similar_storms"] = get_similar_storms(
+        adm_email_content["ADM_PCODE"], adm_email_content["max_adm_wind"]
+    )
+
+    def get_similar_storms_str(x_list):
+        return "<br>".join(
+            [f'{x.get("nameyear")} ({int(x.get("adm_wind"))})' for x in x_list]
+        )
+
+    adm_email_content["similar_storms_str"] = adm_email_content[
+        "similar_storms"
+    ].apply(get_similar_storms_str)
 
     ny_tz = pytz.timezone("America/New_York")
     cyclone_name = monitoring_group.iloc[0]["name"]

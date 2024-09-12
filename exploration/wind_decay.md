@@ -27,38 +27,104 @@ import numpy as np
 
 from src.datasources import ibtracs, nhc
 from src.monitoring import monitoring_utils
+from src.constants import *
+from src.datasources.ibtracs import get_similar_storms
 ```
 
 ```python
-df = nhc.load_recent_glb_forecasts()
+df_sid_name = ibtracs.load_sid_names()
 ```
 
 ```python
-test = monitoring_utils.update_all_fcast_monitoring(
-    clobber=True, disable_progress_bar=False
+df_stats = ibtracs.load_all_adm_wind_stats()
+```
+
+```python
+df_stats = df_stats.merge(df_sid_name)
+```
+
+```python
+df_stats
+```
+
+```python
+df_monitoring = monitoring_utils.load_existing_monitoring_points(
+    "fcast", "all"
 )
 ```
 
 ```python
-X = range(0, 251)
-fig, ax = plt.subplots()
-ax.scatter(x=X, y=[ibtracs.estimate_wind_at_distance(80, x) for x in X])
+df_monitoring
 ```
 
 ```python
-pd.DataFrame()
+pcodes = ["HT", "VC"]
+adm_winds = [80, 20]
+similar_storms = []
+n_similar_storms = 3
+for pcode, adm_wind in zip(pcodes, adm_winds):
+    df_adm = df_stats[df_stats["ADM_PCODE"] == pcode].copy()
+    df_adm["wind_dif"] = df_adm["adm_wind"] - adm_wind
+    df_adm["wind_dif_abs"] = df_adm["wind_dif"].abs()
+    df_adm = df_adm.sort_values("wind_dif_abs")
+    df_similar = df_adm.iloc[:3]
+    cols = ["sid", "nameyear", "adm_wind"]
+    dicts_s = df_similar[cols].to_dict("records")
+    similar_storms.append(dicts_s)
 ```
 
 ```python
-ibtracs.estimate_wind_at_distance(
-    np.array([80, 90, 80, 90]), np.array([1, 2, 100, 250])
+similar_storms
+```
+
+```python
+monitor_id = "al022024_fcast_2024-06-29T09:00:00"
+```
+
+```python
+df_monitoring["email_monitor_id"] = df_monitoring["monitor_id"].apply(
+    lambda x: "_".join(x.split("_")[:-1])
+)
+monitoring_group = df_monitoring[
+    (df_monitoring["email_monitor_id"] == monitor_id)
+]
+```
+
+```python
+adm_email_content = monitoring_group[
+    monitoring_group["min_dist"] < ALL_MIN_EMAIL_DISTANCE
+].copy()
+```
+
+```python
+adm_email_content["similar_storms"] = get_similar_storms(
+    adm_email_content["ADM_PCODE"], adm_email_content["max_adm_wind"]
 )
 ```
 
 ```python
-test.plot.scatter(x="min_dist", y="max_adm_wind")
+def get_similar_storms_str(x_list):
+    return "\n".join(
+        [
+            f'{x.get("nameyear")} ({int(x.get("adm_wind"))} knots)'
+            for x in x_list
+        ]
+    )
+
+
+get_similar_storms_str(adm_email_content["similar_storms"].iloc[0])
 ```
 
 ```python
-test
+adm_email_content["similar_storms_str"] = adm_email_content[
+    "similar_storms"
+].apply(get_similar_storms_str)
+```
+
+```python
+adm_email_content
+```
+
+```python
+
 ```

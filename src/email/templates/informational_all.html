@@ -3,28 +3,61 @@
 {% block content %}
 <div style="font-size:10px;padding: 6px 10px 6px 10px;background-color:#CCCCCC;color:#FFFFFF">
   <p style="margin:0;">
-    This email is purely advisory and does not constitute an official notice for anticipatory action. It also does not constitute an official forecast. Under the World Meteorological Organization's Tropical Cyclone Programme, RSMC Miami, operated by the NOAA National Hurricane Center, is responsible for monitoring hurricanes in the region; <a href="https://www.nhc.noaa.gov/cyclones/">the forecasts published on their website</a> should be treated as authoritative.
+    This email is purely advisory and does not constitute an official notice for anticipatory action. It also does not constitute an official forecast. Under the World Meteorological Organization's Tropical Cyclone Programme, RSMC Miami, operated by the NOAA National Hurricane Center, is responsible for monitoring hurricanes in the region; their publications should be treated as authoritative.
   </p>
 </div>
 <div>
   <p>Dear colleagues,</p>
   <p>
-    The {{ fcast_obsv }} for {{ name }} produced at {{ pub_time }} on {{ pub_date }} (New York time) has been published by the NOAA National Hurricane Center, operators of Regional Specialized Meteorological Centre (RSMC) Miami.
+    The {{ fcast_obsv }} for {{ name }} produced at {{ pub_time }} on {{ pub_date }} (New York time) has been published by the NOAA National Hurricane Center, operators of Regional Specialized Meteorological Centre (RSMC) Miami. It is available online <a href="https://www.nhc.noaa.gov/cyclones/">here</a>.
   </p>
   <p>
     The countries (or, in the case of large countries, top-level administrative divisions) that the storm is forecast to pass within
     {{ min_email_dist }} km of are listed below, with the highest estimated return periods listed first.
   </p>
-  {% for adm in adms %}
-      <h3>{{ adm.ADM_NAME }}</h3>
-      <p>
-        Estimated maximum wind speed on land in {{ adm.short_name }}: <b>{{ adm.max_adm_wind }} knots</b><br>
-        Estimated return period based on maximum wind speed on land: <b>{{ adm.adm_wind_rp_str }} years</b><br>
-        Forecasted closest pass: <b>{{ adm.min_dist }} km</b><br>
-        Maximum wind speed (centre of storm) while at closest pass: <b>{{ adm.closest_s }} knots ({{ adm.category }})</b><br>
-        Time to closest pass: <b>{{ adm.hours_to_closest }} hours</b>
-      </p>
-  {% endfor %}
+  <table style="width: 100%; border-collapse: collapse; border-top: 2px solid black;">
+    <thead style="border-bottom: 2px solid black;">
+      <tr>
+        <th style="text-align: left; padding: 8px; font-weight: bold; font-style: italic;">Name</th>
+        <th style="text-align: left; padding: 8px; font-weight: bold; font-style: italic;">Max. wind in area (knots)</th>
+        <th style="text-align: left; padding: 8px; font-weight: bold; font-style: italic; width: 25%">Similar historical storms (knots)</th>
+        <th style="text-align: left; padding: 8px; font-weight: bold; font-style: italic;">Estimated return period (years)</th>
+        <th style="text-align: left; padding: 8px; font-weight: bold; font-style: italic;">Min. distance (km)</th>
+        <th style="text-align: left; padding: 8px; font-weight: bold; font-style: italic;">Category while closest</th>
+        <th style="text-align: left; padding: 8px; font-weight: bold; font-style: italic;">Time to closest pass (hours)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for adm in adms %}
+        <tr style="border-bottom: 1px solid lightgray;">
+          <td style="padding: 6px; font-weight: bold;">{{ adm.ADM_NAME }}</td>
+          <td style="padding: 6px;">{{ adm.max_adm_wind }}</td>
+          <td style="padding: 6px;">{{ adm.similar_storms_str }}</td>
+          <td style="padding: 6px;">{{ adm.adm_wind_rp_str }}</td>
+          <td style="padding: 6px;">{{ adm.min_dist }}</td>
+          <td style="padding: 6px;">{{ adm.category }}</td>
+          <td style="padding: 6px;">{{ adm.hours_to_closest }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="8" style="border-top: 2px solid black;"></td>
+      </tr>
+    </tfoot>
+  </table>
+  <p>
+    Columns reference:
+    <ul>
+      <li><i><b>Name</b></i>: The name of the administrative division.</li>
+      <li><i><b>Max. wind in area (knots)</b></i>: The estimated maximum windspeed inside the administrative division, based on the forecast track. This is a simple estimate that does not take into account differences in wind speed between quadrants of the storm, which can be significant.</li>
+      <li><i><b>Similar historical storms (knots)</b></i> The three historical storms since 2000 with the closest <i>"Max. wind in area"</i> to this forecast. The corresponding <i>"Max. wind in area"</i> of the historical storm is shown in brackets.</li>
+      <li><i><b>Estimated return period (years)</b></i>: Based on the <i>"Max. wind in area"</i> of the forecast, the approximate return period, based on historical storms since 2000.</li>
+      <li><i><b>Min. distance (km)</b></i>: The forecasted closest pass of the storm to the administrative division. 0 km would correspond to landfall.</li>
+      <li><i><b>Category while closest</b></i>: The category of the storm while it is at its closest pass to the administrative division. Note that higher winds in the administrative may be generated by the storm while it is farther away but stronger.</li>
+      <li><i><b>Time to closest pass (hours)</b></i>: The estimated time from the issue time of the forecast (listed above) and the storm's closest pass to the administrative division.</li>
+    </ul>
+  </p>
   <p>
     The code used to produce this alert is available on GitHub <a href="https://github.com/OCHA-DAP/ds-hurricane-monitoring">here</a>.
   </p>
