@@ -78,13 +78,16 @@ def create_plot(
     plot_type: Literal["map", "scatter"],
     fcast_obsv: Literal["fcast", "obsv"],
     geography: Literal["cub", "all"],
+    debug: bool = False,
 ):
     if geography != "cub":
         raise NotImplementedError("Only Cuba is supported for now")
     if plot_type == "map":
-        create_map_plot(monitor_id, fcast_obsv, geography)
+        return create_map_plot(monitor_id, fcast_obsv, geography, debug=debug)
     elif plot_type == "scatter":
-        create_scatter_plot(monitor_id, fcast_obsv, geography)
+        return create_scatter_plot(
+            monitor_id, fcast_obsv, geography, debug=debug
+        )
     else:
         raise ValueError(f"Unknown plot type: {plot_type}")
 
@@ -93,14 +96,15 @@ def create_scatter_plot(
     monitor_id: str,
     fcast_obsv: Literal["fcast", "obsv"],
     geography: Literal["cub", "all"],
+    debug: bool = False,
 ):
     if geography != "cub":
         raise NotImplementedError("Only Cuba is supported for now")
-    create_cub_scatter_plot(monitor_id, fcast_obsv)
+    return create_cub_scatter_plot(monitor_id, fcast_obsv, debug=debug)
 
 
 def create_cub_scatter_plot(
-    monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]
+    monitor_id: str, fcast_obsv: Literal["fcast", "obsv"], debug: bool = False
 ):
     adm = codab.load_codab_from_blob("cub", aoi_only=True)
     wind_stats = ibtracs.load_havana_wind_stats()
@@ -269,7 +273,8 @@ def create_cub_scatter_plot(
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     ax.set_title("Comparison with historical wind speeds and distances")
-
+    if debug:
+        return fig, ax
     buffer = io.BytesIO()
     fig.savefig(buffer, format="png", dpi=150, bbox_inches="tight")
     buffer.seek(0)
@@ -282,13 +287,16 @@ def create_map_plot(
     monitor_id: str,
     fcast_obsv: Literal["fcast", "obsv"],
     geography: Literal["cub", "all"],
+    debug: bool = False,
 ):
     if geography != "cub":
         raise NotImplementedError("Only Cuba is supported for now")
-    create_cub_map_plot(monitor_id, fcast_obsv)
+    return create_cub_map_plot(monitor_id, fcast_obsv, debug=debug)
 
 
-def create_cub_map_plot(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
+def create_cub_map_plot(
+    monitor_id: str, fcast_obsv: Literal["fcast", "obsv"], debug: bool = False
+):
     adm = codab.load_codab_from_blob("cub", aoi_only=True)
     lts = {
         "action": {
@@ -322,7 +330,9 @@ def create_cub_map_plot(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         fcast_obsv, "cub"
     )
     if monitor_id in [TEST_FCAST_MONITOR_ID, TEST_OBSV_MONITOR_ID]:
-        df_monitoring = add_test_row_to_monitoring(df_monitoring, fcast_obsv)
+        df_monitoring = add_test_row_to_monitoring(
+            df_monitoring, fcast_obsv, "cub"
+        )
     monitoring_point = df_monitoring.set_index("monitor_id").loc[monitor_id]
     ny_tz = pytz.timezone("America/New_York")
     cyclone_name = monitoring_point["name"]
@@ -356,6 +366,13 @@ def create_cub_map_plot(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         convert_datetime_to_str
     )
     tracks_f["lt"] = tracks_f["validTime"] - tracks_f["issuance"]
+    tracks_f["windspeed_validtime_str"] = (
+        tracks_f["maxwind"].astype(str)
+        + " kt<br>"
+        + tracks_f["valid_time_str"].apply(
+            lambda x: f"{x.split(', ')[0]},<br>{x.split(', ')[1]}"
+        )
+    )
 
     fig = go.Figure()
 
@@ -402,15 +419,15 @@ def create_cub_map_plot(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
                 lon=dff["longitude"],
                 lat=dff["latitude"],
                 mode="markers+text+lines",
-                marker=dict(size=40, color=lt_params["plot_color"]),
-                text=dff["maxwind"].astype(str),
+                marker=dict(size=50, color=lt_params["plot_color"]),
+                text=dff["windspeed_validtime_str"].astype(str),
                 line=dict(width=2, color=lt_params["plot_color"]),
-                textfont=dict(size=20, color="white"),
+                textfont=dict(size=12, color="white"),
                 customdata=dff["valid_time_str"],
                 hovertemplate=("Valid time: %{customdata}<extra></extra>"),
             )
         )
-
+    print(dff)
     adm_centroid = adm.to_crs(3857).centroid.to_crs(4326)[0]
     centroid_lat, centroid_lon = adm_centroid.y, adm_centroid.x
 
@@ -441,7 +458,7 @@ def create_cub_map_plot(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     fcast_obsv_str = "observations" if fcast_obsv == "obsv" else "forecast"
     plot_title = (
         f"NOAA {fcast_obsv_str} for {cyclone_name}<br>"
-        f"<sup>Issued {issue_time_str} (New York time)</sup>"
+        f"<sup>Issued {issue_time_str} (all times are New York time)</sup>"
     )
 
     if fcast_obsv == "fcast":
@@ -470,14 +487,16 @@ def create_cub_map_plot(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
                 yref="paper",
                 x=0.01,
                 y=0.01,
-                sizex=0.3,
-                sizey=0.3 / aspect,
+                sizex=0.25,
+                sizey=0.25 / aspect,
                 xanchor="left",
                 yanchor="bottom",
                 opacity=0.7,
             )
         ],
     )
+    if debug:
+        return fig
 
     buffer = io.BytesIO()
     # scale corresponds to 150 dpi

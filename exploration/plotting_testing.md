@@ -23,8 +23,19 @@ jupyter:
 
 ```python
 from src.email import plotting
+from src.email.utils import TEST_FCAST_MONITOR_ID
 ```
 
 ```python
 plotting.update_plots("fcast", "cub", verbose=True)
+```
+
+```python
+plotting.create_plot(
+    TEST_FCAST_MONITOR_ID, "map", "fcast", "cub", debug=True
+).show()
+```
+
+```python
+
 ```
