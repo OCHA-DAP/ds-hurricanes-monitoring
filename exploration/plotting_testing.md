@@ -32,7 +32,13 @@ plotting.update_plots("fcast", "all", verbose=True)
 
 ```python
 test = plotting.create_plot(
-    TEST_FCAST_MONITOR_ID, "map", "fcast", "all", debug=True
+    "al162024_fcast_2024-10-20T21:00:00", "map", "fcast", "all", debug=True
+)
+```
+
+```python
+plotting.create_plot(
+    "al162024_fcast_2024-10-20T21:00:00", "map", "fcast", "all", debug=False
 )
 ```
 

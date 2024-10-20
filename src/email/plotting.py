@@ -491,12 +491,14 @@ def create_all_map_plot(
         return fig
 
     buffer = io.BytesIO()
-    # scale corresponds to 150 dpi
-    fig.write_image(buffer, format="png", scale=2.08)
-    buffer.seek(0)
-
     blob_name = get_plot_blob_name(monitor_id, "map", "all")
-    blob.upload_blob_data(blob_name, buffer)
+    # scale corresponds to 150 dpi
+    try:
+        fig.write_image(buffer, format="png", scale=2.08)
+        buffer.seek(0)
+        blob.upload_blob_data(blob_name, buffer)
+    except Exception as e:
+        print(f"Error uploading {blob_name}: {e}")
 
 
 def create_cub_map_plot(
