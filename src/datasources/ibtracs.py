@@ -74,17 +74,17 @@ def speed2strcat(speed: float) -> str:
     """Convert knots to hurricane category using Saffir-Simpson scale."""
     if speed < 0:
         raise ValueError("Wind speed must be positive")
-    elif speed < 18:
+    elif speed < 34:
         return "Trop. Dep."
-    elif speed < 33:
-        return "Trop. Storm"
     elif speed < 64:
-        return "Cat. 1"
+        return "Trop. Storm"
     elif speed < 83:
-        return "Cat. 2"
+        return "Cat. 1"
     elif speed < 96:
-        return "Cat. 3"
+        return "Cat. 2"
     elif speed < 113:
+        return "Cat. 3"
+    elif speed < 137:
         return "Cat. 4"
     else:
         return "Cat. 5"
