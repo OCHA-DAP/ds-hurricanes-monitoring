@@ -27,15 +27,19 @@ from src.email.utils import TEST_FCAST_MONITOR_ID
 ```
 
 ```python
-plotting.update_plots("fcast", "cub", verbose=True)
+plotting.update_plots("fcast", "all", verbose=True)
 ```
 
 ```python
-plotting.create_plot(
-    TEST_FCAST_MONITOR_ID, "map", "fcast", "cub", debug=True
-).show()
+test = plotting.create_plot(
+    TEST_FCAST_MONITOR_ID, "map", "fcast", "all", debug=True
+)
 ```
 
 ```python
+test
+```
 
+```python
+test[test["issuance"] > "2024-06-28"]
 ```

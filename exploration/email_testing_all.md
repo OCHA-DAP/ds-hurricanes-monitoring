@@ -33,6 +33,7 @@ from src.email.send_emails import send_info_email
 from src.email.utils import (
     TEST_ATCF_ID,
     TEST_STORM,
+    TEST_FCAST_MONITOR_ID,
     add_test_row_to_monitoring,
     load_email_record,
 )
@@ -48,6 +49,10 @@ geography = "all"
 ```python
 df_existing_email_record = load_email_record()
 df_existing_email_record
+```
+
+```python
+send_info_email(TEST_FCAST_MONITOR_ID, "fcast", "all")
 ```
 
 ```python

@@ -149,7 +149,7 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         )
         for _, row in cc_list.iterrows()
     ]
-
+    map_cid = make_msgid(domain="humdata.org")
     chd_banner_cid = make_msgid(domain="humdata.org")
     ocha_logo_cid = make_msgid(domain="humdata.org")
 
@@ -162,12 +162,23 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         test_email=TEST_STORM,
         adms=adm_email_content.to_dict(orient="records"),
         min_email_dist=ALL_MIN_EMAIL_DISTANCE,
+        map_cid=map_cid[1:-1],
         chd_banner_cid=chd_banner_cid[1:-1],
         ocha_logo_cid=ocha_logo_cid[1:-1],
     )
     text_str = html2text(html_str)
     msg.set_content(text_str)
     msg.add_alternative(html_str, subtype="html")
+
+    for plot_type, cid in zip(["map"], [map_cid]):
+        blob_name = get_plot_blob_name(monitor_id, plot_type, "all")
+        image_data = io.BytesIO()
+        blob_client = blob.get_container_client().get_blob_client(blob_name)
+        blob_client.download_blob().download_to_stream(image_data)
+        image_data.seek(0)
+        msg.get_payload()[1].add_related(
+            image_data.read(), "image", "png", cid=cid
+        )
 
     for filename, cid in zip(
         ["centre_banner.png", "ocha_logo_wide.png"],
