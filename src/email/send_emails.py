@@ -125,7 +125,7 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     msg = EmailMessage()
     msg.set_charset("utf-8")
     msg["Subject"] = (
-        f"{test_subject}Hurricane Monitoring – {cyclone_name} "
+        f"{test_subject}Hurricane Monitoring [Caribbean]: {cyclone_name} "
         f"forecast issued {pub_time}, {pub_date} "
     )
     msg["From"] = Address(
@@ -234,7 +234,7 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     msg = EmailMessage()
     msg.set_charset("utf-8")
     msg["Subject"] = (
-        f"{test_subject}Cuba – {cyclone_name} "
+        f"{test_subject}Hurricane Monitoring [Havana]: {cyclone_name} "
         f"forecast issued {pub_time}, {pub_date} "
     )
     msg["From"] = Address(
