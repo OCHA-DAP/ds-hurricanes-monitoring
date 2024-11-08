@@ -97,3 +97,5 @@ ADMIN1_ISO3S = [
     # Panama
     "pan",
 ]
+
+RAFAEL_ATCF_ID = "al182024"
