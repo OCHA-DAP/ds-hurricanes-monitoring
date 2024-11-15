@@ -9,5 +9,6 @@ CHIRPS_GEFS_URL = (
 
 def open_chirps_gefs(issue_date, valid_date):
     url = CHIRPS_GEFS_URL.format(issue_date=issue_date, valid_date=valid_date)
+    print(url)
     return rxr.open_rasterio(url, chunks=True)
     # return rxr.open_rasterio(url, chunks={"band": 1, "x": 100, "y": 100})
