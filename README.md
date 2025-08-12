@@ -1,6 +1,6 @@
 # Hurricanes Monitoring
 
-Monitoring for hurricanes in the Caribbean. 
+Monitoring for hurricanes in the Caribbean.
 
 ## Directory structure
 
