@@ -58,18 +58,25 @@ def estimate_wind_at_distance(
     float
         Wind speed in knots.
     """
-    if distance == 0:
-        return vmax
-    vmax = vmax * KNOTS_TO_MS
+    vmax_ms = vmax * KNOTS_TO_MS
+
     if rmax is None:
-        rmax = estimate_rmax(vmax)
-    wind_speed = np.where(
-        distance < rmax,
-        vmax / KNOTS_TO_MS,
-        (vmax * (rmax / distance) ** B * np.exp(1 - (rmax / distance) ** B))
-        / KNOTS_TO_MS,
+        rmax = estimate_rmax(vmax_ms)  # Should return array-like
+
+    # Vectorized computation
+    wind_speed_ms = np.where(
+        distance == 0,
+        vmax_ms,
+        np.where(
+            distance < rmax,
+            vmax_ms,
+            vmax_ms
+            * (rmax / distance) ** B
+            * np.exp(1 - (rmax / distance) ** B),
+        ),
     )
-    return wind_speed
+
+    return wind_speed_ms / KNOTS_TO_MS
 
 
 def speed2strcat(speed: float) -> str:
