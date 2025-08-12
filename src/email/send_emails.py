@@ -8,6 +8,7 @@ from typing import Literal
 
 import numpy as np
 import pytz
+from azure.core.exceptions import ResourceNotFoundError
 from html2text import html2text
 from jinja2 import Environment, FileSystemLoader
 
@@ -16,11 +17,11 @@ from src.datasources import codab
 from src.datasources.ibtracs import get_similar_storms, speed2strcat
 from src.email.plotting import get_plot_blob_name
 from src.email.utils import (
-    EMAIL_ADDRESS,
-    EMAIL_HOST,
-    EMAIL_PASSWORD,
-    EMAIL_PORT,
-    EMAIL_USERNAME,
+    DSCI_AWS_EMAIL_ADDRESS,
+    DSCI_AWS_EMAIL_HOST,
+    DSCI_AWS_EMAIL_PASSWORD,
+    DSCI_AWS_EMAIL_PORT,
+    DSCI_AWS_EMAIL_USERNAME,
     STATIC_DIR,
     TEMPLATES_DIR,
     TEST_FCAST_MONITOR_ID,
@@ -130,8 +131,8 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     )
     msg["From"] = Address(
         "OCHA Centre for Humanitarian Data",
-        EMAIL_ADDRESS.split("@")[0],
-        EMAIL_ADDRESS.split("@")[1],
+        DSCI_AWS_EMAIL_ADDRESS.split("@")[0],
+        DSCI_AWS_EMAIL_ADDRESS.split("@")[1],
     )
     msg["To"] = [
         Address(
@@ -174,7 +175,11 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         blob_name = get_plot_blob_name(monitor_id, plot_type, "all")
         image_data = io.BytesIO()
         blob_client = blob.get_container_client().get_blob_client(blob_name)
-        blob_client.download_blob().download_to_stream(image_data)
+        try:
+            blob_client.download_blob().download_to_stream(image_data)
+        except ResourceNotFoundError:
+            print(f"Blob not found: {blob_name}, skipping this plot")
+            continue
         image_data.seek(0)
         msg.get_payload()[1].add_related(
             image_data.read(), "image", "png", cid=cid
@@ -192,10 +197,12 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
 
     context = ssl.create_default_context()
 
-    with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, context=context) as server:
-        server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+    with smtplib.SMTP_SSL(
+        DSCI_AWS_EMAIL_HOST, DSCI_AWS_EMAIL_PORT, context=context
+    ) as server:
+        server.login(DSCI_AWS_EMAIL_USERNAME, DSCI_AWS_EMAIL_PASSWORD)
         server.sendmail(
-            EMAIL_ADDRESS,
+            DSCI_AWS_EMAIL_ADDRESS,
             to_list["email"].tolist() + cc_list["email"].tolist(),
             msg.as_string(),
         )
@@ -239,8 +246,8 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
     )
     msg["From"] = Address(
         "OCHA Centre for Humanitarian Data",
-        EMAIL_ADDRESS.split("@")[0],
-        EMAIL_ADDRESS.split("@")[1],
+        DSCI_AWS_EMAIL_ADDRESS.split("@")[0],
+        DSCI_AWS_EMAIL_ADDRESS.split("@")[1],
     )
     msg["To"] = [
         Address(
@@ -303,10 +310,12 @@ def send_cub_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
 
     context = ssl.create_default_context()
 
-    with smtplib.SMTP_SSL(EMAIL_HOST, EMAIL_PORT, context=context) as server:
-        server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+    with smtplib.SMTP_SSL(
+        DSCI_AWS_EMAIL_HOST, DSCI_AWS_EMAIL_PORT, context=context
+    ) as server:
+        server.login(DSCI_AWS_EMAIL_USERNAME, DSCI_AWS_EMAIL_PASSWORD)
         server.sendmail(
-            EMAIL_ADDRESS,
+            DSCI_AWS_EMAIL_ADDRESS,
             to_list["email"].tolist() + cc_list["email"].tolist(),
             msg.as_string(),
         )

@@ -1,9 +1,11 @@
+import re
 from typing import Literal
 
 import geopandas as gpd
 import pandas as pd
 from tqdm.auto import tqdm
 
+from src.constants import NUMERIC_NAME_REGEX
 from src.datasources import codab, ibtracs, nhc
 from src.datasources.ibtracs import estimate_wind_at_distance
 from src.utils import blob
@@ -67,6 +69,9 @@ def update_all_fcast_monitoring(
                     )
                 continue
         for atcf_id, group in issue_group.groupby("id"):
+            group = _remove_track_duplicates(
+                group, "validTime", atcf_id=atcf_id
+            )
             cols = ["latitude", "longitude", "maxwind"]
             df_interp = (
                 group.set_index("validTime")[cols]
@@ -213,3 +218,31 @@ def update_cub_fcast_monitoring(clobber: bool = False, verbose: bool = False):
         ["issue_time", "atcf_id"]
     )
     blob.upload_parquet_to_blob(blob_name, df_monitoring_combined)
+
+
+def _remove_track_duplicates(
+    df: pd.DataFrame, index_col: str, atcf_id: str = None
+) -> pd.DataFrame:
+    """Remove duplicate track entries based on a specified index column."""
+    df = df.copy()
+    if atcf_id is None:
+        atcf_id = df.iloc[0]["atcf_id"]
+    # check if the name is numeric (i.e. before an actual name is assigned)
+    df["numeric_name"] = df["name"].apply(
+        lambda x: bool(re.compile(NUMERIC_NAME_REGEX).search(x))
+    )
+    df_duplicated = df[df.duplicated(subset=[index_col], keep=False)]
+    if not df_duplicated.empty:
+        drop_name, drop_lastupdate = df_duplicated[
+            df_duplicated["numeric_name"]
+        ].iloc[0][["name", index_col]]
+        df = (
+            df.sort_values("numeric_name", ascending=False)
+            .drop_duplicates(subset=[index_col])
+            .sort_values(index_col)
+        )
+        print(
+            f"Dropping duplicate track entry for {atcf_id} "
+            f"({drop_name} at {drop_lastupdate})"
+        )
+    return df

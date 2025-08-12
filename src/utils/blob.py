@@ -13,7 +13,7 @@ import xarray as xr
 from azure.storage.blob import ContainerClient, ContentSettings
 
 PROD_BLOB_SAS = os.getenv("PROD_BLOB_SAS")
-DEV_BLOB_SAS = os.getenv("DEV_BLOB_SAS")
+DSCI_AZ_BLOB_DEV_SAS_WRITE = os.getenv("DSCI_AZ_BLOB_DEV_SAS_WRITE")
 
 PROJECT_PREFIX = "ds-hurricanes-monitoring"
 
@@ -21,7 +21,7 @@ PROJECT_PREFIX = "ds-hurricanes-monitoring"
 def get_container_client(
     container_name: str = "projects", stage: Literal["prod", "dev"] = "dev"
 ):
-    sas = DEV_BLOB_SAS if stage == "dev" else PROD_BLOB_SAS
+    sas = DSCI_AZ_BLOB_DEV_SAS_WRITE if stage == "dev" else PROD_BLOB_SAS
     container_url = (
         f"https://imb0chd0{stage}.blob.core.windows.net/"
         f"{container_name}?{sas}"
