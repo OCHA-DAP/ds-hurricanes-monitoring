@@ -58,6 +58,8 @@ def estimate_wind_at_distance(
     float
         Wind speed in knots.
     """
+    if distance == 0:
+        return vmax
     vmax = vmax * KNOTS_TO_MS
     if rmax is None:
         rmax = estimate_rmax(vmax)

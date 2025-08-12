@@ -67,7 +67,10 @@ df = pd.DataFrame(
         ["Veronique Durroux", "durroux@un.org", None, "to"],
         ["Brenda Eriksen", "eriksenb@un.org", None, "to"],
         ["Marc Belanger", "belanger2@un.org", None, "to"],
+        ["Raquel PENA ALVAREZ", "raquel.pena@un.org", "to", "to"],
         # CHD DS
+        ["Sarah Telford", "telford@un.org", None, "cc"],
+        ["Leonardo Milano", "leonardo.milano@un.org", None, "cc"],
         ["Tristan Downing", "tristan.downing@un.org", "cc", "cc"],
         ["Zachary Arno", "zachary.arno@un.org", "cc", "cc"],
         ["Pauline Ndirangu", "pauline.ndirangu@un.org", "cc", "cc"],
