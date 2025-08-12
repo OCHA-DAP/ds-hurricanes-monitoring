@@ -8,6 +8,7 @@ from typing import Literal
 
 import numpy as np
 import pytz
+from azure.core.exceptions import ResourceNotFoundError
 from html2text import html2text
 from jinja2 import Environment, FileSystemLoader
 
@@ -174,7 +175,11 @@ def send_all_info_email(monitor_id: str, fcast_obsv: Literal["fcast", "obsv"]):
         blob_name = get_plot_blob_name(monitor_id, plot_type, "all")
         image_data = io.BytesIO()
         blob_client = blob.get_container_client().get_blob_client(blob_name)
-        blob_client.download_blob().download_to_stream(image_data)
+        try:
+            blob_client.download_blob().download_to_stream(image_data)
+        except ResourceNotFoundError:
+            print(f"Blob not found: {blob_name}, skipping this plot")
+            continue
         image_data.seek(0)
         msg.get_payload()[1].add_related(
             image_data.read(), "image", "png", cid=cid

@@ -102,3 +102,5 @@ RAFAEL_ATCF_ID = "al182024"
 
 ETA_SID = "2020306N15288"
 IOTA_SID = "2020318N16289"
+
+NUMERIC_NAME_REGEX = r"\b(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty)\b"  # noqa: E501

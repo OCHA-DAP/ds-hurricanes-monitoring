@@ -443,6 +443,7 @@ def create_all_map_plot(
     lon_zoom = np.interp(width, LON_ZOOM_RANGE, range(20, 0, -1))
     lat_zoom = np.interp(height, LON_ZOOM_RANGE, range(20, 0, -1))
     zoom = round(min(lon_zoom, lat_zoom), 2)
+    zoom = float(np.clip(zoom, 2.5, 12.0))
     center_lat = (lat_max + lat_min) / 2
     center_lon = (lon_max + lon_min) / 2
 
