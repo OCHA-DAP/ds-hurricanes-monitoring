@@ -478,11 +478,11 @@ def create_all_map_plot(
                 source=f"data:image/png;base64,{encoded_legend}",
                 xref="paper",
                 yref="paper",
-                x=0.01,
+                x=0.99,
                 y=0.01,
                 sizex=0.25,
                 sizey=0.25 / aspect,
-                xanchor="left",
+                xanchor="right",
                 yanchor="bottom",
                 opacity=0.7,
             )
