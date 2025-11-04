@@ -133,7 +133,7 @@ ax.set_title(
 ```
 
 ```python
-issued_date = datetime(2025, 10, 26).date()
+issued_date = datetime(2025, 10, 28).date()
 
 das = []
 for lt in tqdm(range(16)):
@@ -177,6 +177,19 @@ da_gefs_clip
 ```
 
 ```python
+da_gefs_mean_new = da_gefs_clip.mean(dim=["x", "y"])
+```
+
+```python
+df_mean_new = da_gefs_mean_new.to_dataframe("mean")["mean"].reset_index()
+df_mean_new["roll2_mean"] = df_mean_new["mean"].rolling(2).sum()
+```
+
+```python
+df_mean_new["roll2_mean"].max()
+```
+
+```python
 da_gefs_mean = da_gefs_clip.mean(dim=["x", "y"])
 ```
 
@@ -185,11 +198,16 @@ da_gefs_mean.plot()
 ```
 
 ```python
-da_gefs_mean
+df_mean = da_gefs_mean.to_dataframe("mean")["mean"].reset_index()
+df_mean["roll2_mean"] = df_mean["mean"].rolling(2).sum()
 ```
 
 ```python
-gefs_dates = pd.date_range("2025-10-26", "2025-10-29")
+df_mean["roll2_mean"].max()
+```
+
+```python
+gefs_dates = pd.date_range("2025-10-28", "2025-10-29")
 ```
 
 ```python
