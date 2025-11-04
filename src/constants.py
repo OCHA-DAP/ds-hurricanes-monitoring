@@ -102,5 +102,34 @@ RAFAEL_ATCF_ID = "al182024"
 
 ETA_SID = "2020306N15288"
 IOTA_SID = "2020318N16289"
+BERYL_SID = "2024181N09320"
+IRMA_SID = "2017242N16333"
+DORIAN_SID = "2019236N10314"
+MATTHEW_SID = "2016273N13300"
+IAN_SID = "2022266N12294"
+OSCAR_SID = "2024293N21294"
+RAFAEL_SID = "2024309N13283"
+MARIA_SID = "2017260N12310"
+AMANDA_SID = "2020152N12269"
+
 
 NUMERIC_NAME_REGEX = r"\b(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|Thirteen|Fourteen|Fifteen|Sixteen|Seventeen|Eighteen|Nineteen|Twenty)\b"  # noqa: E501
+
+# Saffir-Simpson scale (knots)
+TS = 34
+CAT1 = 64
+CAT2 = 83
+CAT3 = 96
+CAT4 = 113
+CAT5 = 137
+
+CAT_LIMITS = [
+    (TS, "Trop. Storm"),
+    (CAT1, "Cat. 1"),
+    (CAT2, "Cat. 2"),
+    (CAT3, "Cat. 3"),
+    (CAT4, "Cat. 4"),
+    (CAT5, "Cat. 5"),
+]
+
+KNOTS_TO_KMH = 1.852
